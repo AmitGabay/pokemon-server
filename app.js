@@ -2,8 +2,12 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import fs from "fs";
+import connectDB from "./db.js";
+
 const app = express();
 const port = 5000;
+
+connectDB();
 
 app.use(bodyParser.json());
 app.use(cors({ origin: "http://localhost:3000" }));
