@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
-const { Schema } = mongoose;
+
+const { Schema, model } = mongoose;
 
 const userSchema = new Schema({
-  userName: String,
+  email: String,
+  password: String,
   pokemons: [{ id: Number, name: String }],
 });
 
-module.exports = mongoose.modal("User", userSchema);
+export default model("User", userSchema);
