@@ -24,19 +24,20 @@ app
     }
   })
   .post("/pokemons", (req, res) => {
-    const userId = req.body.id;
+    const userId = req.body.userId;
     const pokemons = req.body.pokemons;
-    User.findOneAndUpdate(
-      { _id: userId },
+    User.findByIdAndUpdate(
+      userId,
       { pokemons: pokemons },
+      { new: true },
       (err, doc) => {
         res.status(200).send(doc.pokemons);
       }
     );
   })
   .get("/pokemons", (req, res) => {
-    const userId = req.body;
-    User.findOne({ _id: userId }, (err, doc) => res.send(doc.pokemons));
+    const { userId } = req.query;
+    User.findById(userId, (err, doc) => res.send(doc.pokemons));
   });
 
 app.listen(port, function () {
