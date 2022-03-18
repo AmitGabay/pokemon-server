@@ -15,14 +15,15 @@ app.use(cors({ origin: "http://localhost:3000" }));
 app
   .post("/register", async (req, res) => {
     const { mode, email, password } = req.body;
-    if (mode === "Login") {
-      User.findOne({ email }, (err, doc) => {
-        if (doc.password === password) {
-          res.status(201).send({ userId: doc._id });
-        } else {
-          res.sendStatus(403);
-        }
-      });
+    const doc = await User.findOne({ email });
+    if (doc && mode === "Login") {
+      if (doc.password === password) {
+        res.status(201).send({ userId: doc._id });
+      } else {
+        res.sendStatus(403);
+      }
+    } else if (doc) {
+      res.sendStatus(409);
     } else {
       const user = new User({ email, password });
       try {
@@ -33,21 +34,20 @@ app
       }
     }
   })
-  .post("/pokemons", (req, res) => {
+  .post("/pokemons", async (req, res) => {
     const userId = req.body.userId;
     const pokemons = req.body.pokemons;
-    User.findByIdAndUpdate(
+    const doc = await User.findByIdAndUpdate(
       userId,
       { pokemons: pokemons },
-      { new: true },
-      (err, doc) => {
-        res.status(200).send(doc.pokemons);
-      }
+      { new: true }
     );
+    res.status(200).send(doc.pokemons);
   })
-  .get("/pokemons", (req, res) => {
+  .get("/pokemons", async (req, res) => {
     const { userId } = req.query;
-    User.findById(userId, (err, doc) => res.send(doc.pokemons));
+    const doc = await User.findById(userId);
+    res.send(doc.pokemons);
   });
 
 app.listen(port, function () {
