@@ -14,13 +14,23 @@ app.use(cors({ origin: "http://localhost:3000" }));
 
 app
   .post("/register", async (req, res) => {
-    const { email, password } = req.body;
-    const user = new User({ email, password });
-    try {
-      const savedUser = await user.save();
-      res.status(201).send({ userId: savedUser._id });
-    } catch {
-      res.sendStatus(500);
+    const { mode, email, password } = req.body;
+    if (mode === "Login") {
+      User.findOne({ email }, (err, doc) => {
+        if (doc.password === password) {
+          res.status(201).send({ userId: doc._id });
+        } else {
+          res.sendStatus(403);
+        }
+      });
+    } else {
+      const user = new User({ email, password });
+      try {
+        const savedUser = await user.save();
+        res.status(201).send({ userId: savedUser._id });
+      } catch {
+        res.sendStatus(500);
+      }
     }
   })
   .post("/pokemons", (req, res) => {
