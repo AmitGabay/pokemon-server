@@ -10,7 +10,10 @@ const port = 5000;
 connectDB();
 
 app.use(bodyParser.json());
-app.use(cors({ origin: "http://localhost:3000" }));
+
+app.use(
+  cors({ origin: ["https://pokemon-act.pages.dev", "http://localhost:3000"] })
+);
 
 app
   .post("/register", async (req, res) => {
