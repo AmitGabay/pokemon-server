@@ -5,7 +5,7 @@ import connectDB from "./db.js";
 import User from "./models/user.js";
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
 
 connectDB();
 
