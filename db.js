@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const url = `mongodb+srv://Amit:a1M9i9T5@cluster0.0jtxb.mongodb.net/pokemonUsers?retryWrites=true&w=majority`;
+const url = `mongodb+srv://${process.env.MONGO_ATLAS_USERNAME}:${process.env.MONGO_ATLAS_PASSWORD}@cluster0.0jtxb.mongodb.net/pokemonUsers?retryWrites=true&w=majority`;
 
 const connectionParams = {
   useNewUrlParser: true,
