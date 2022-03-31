@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import connectDB from "./db.js";
 import User from "./models/user.js";
+import bcrypt from "bcrypt";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -15,24 +16,29 @@ app.use(
   cors({ origin: ["https://pokemon-act.pages.dev", "http://localhost:3000"] })
 );
 
+const saltRounds = 10;
+
 app
   .post("/register", async (req, res) => {
     const { mode, email, password } = req.body;
     const doc = await User.findOne({ email });
     if (doc && mode === "Login") {
-      if (doc.password === password) {
-        res.status(201).send({ userId: doc._id });
-      } else {
-        res.sendStatus(403);
-      }
+      bcrypt.compare(password, doc.password).then(function (result) {
+        if (result) {
+          res.status(201).send({ userId: doc._id });
+        } else {
+          res.sendStatus(403);
+        }
+      });
     } else if (doc) {
       res.sendStatus(409);
     } else {
-      const user = new User({ email, password });
+      const hash = await bcrypt.hash(password, saltRounds);
+      const user = new User({ email, password: hash });
       try {
         const savedUser = await user.save();
         res.status(201).send({ userId: savedUser._id });
-      } catch {
+      } catch (err) {
         res.sendStatus(500);
       }
     }
