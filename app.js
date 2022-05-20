@@ -4,9 +4,10 @@ import cors from "cors";
 import connectDB from "./db.js";
 import User from "./models/user.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const app = express();
-const port = process.env.PORT || 5000;
+const { PORT = 5000, KEY = "keyboard cat" } = process.env;
 
 connectDB();
 
@@ -25,7 +26,12 @@ app
     if (doc && mode === "Login") {
       bcrypt.compare(password, doc.password).then(function (result) {
         if (result) {
-          res.status(201).send({ userId: doc._id });
+          const token = jwt.sign({ userId: doc._id }, KEY, {
+            expiresIn: 6000,
+          });
+          doc.token = token;
+          doc.save();
+          res.status(201).send({ token });
         } else {
           res.sendStatus(403);
         }
@@ -36,15 +42,24 @@ app
       const hash = await bcrypt.hash(password, saltRounds);
       const user = new User({ email, password: hash });
       try {
-        const savedUser = await user.save();
-        res.status(201).send({ userId: savedUser._id });
+        const token = jwt.sign({ userId: user._id }, KEY, {
+          expiresIn: 60,
+        });
+        user.token = token;
+        await user.save();
+        res.status(201).send({ token });
       } catch (err) {
         res.sendStatus(500);
       }
     }
   })
+  .get("/pokemons", async (req, res) => {
+    const { userId } = jwt.verify(req.headers.authorization, KEY);
+    const doc = await User.findById(userId);
+    res.send(doc.pokemons);
+  })
   .post("/pokemons", async (req, res) => {
-    const userId = req.body.userId;
+    const { userId } = jwt.verify(req.headers.authorization, KEY);
     const pokemons = req.body.pokemons;
     const doc = await User.findByIdAndUpdate(
       userId,
@@ -52,13 +67,8 @@ app
       { new: true }
     );
     res.status(200).send(doc.pokemons);
-  })
-  .get("/pokemons", async (req, res) => {
-    const { userId } = req.query;
-    const doc = await User.findById(userId);
-    res.send(doc.pokemons);
   });
 
-app.listen(port, function () {
-  console.log(`Example app listening on port ${port}!`);
+app.listen(PORT, function () {
+  console.log(`Example app listening on port ${PORT}!`);
 });
