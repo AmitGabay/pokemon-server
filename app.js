@@ -7,7 +7,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const app = express();
-const { PORT = 5000, KEY = "keyboard cat" } = process.env;
+const { PORT = 5000, KEY } = process.env;
+const saltRounds = 10;
 
 connectDB();
 
@@ -17,13 +18,17 @@ app.use(
   cors({ origin: ["https://pokemon-act.pages.dev", "http://localhost:3000"] })
 );
 
-const saltRounds = 10;
+app.use((req, _, next) => {
+  const { userId } = jwt.verify(req.headers.authorization, KEY);
+  req.userId = userId;
+  next();
+});
 
 app
-  .post("/register", async (req, res) => {
-    const { mode, email, password } = req.body;
+  .post("/Login", async (req, res) => {
+    const { email, password } = req.body;
     const doc = await User.findOne({ email });
-    if (doc && mode === "Login") {
+    if (doc) {
       bcrypt.compare(password, doc.password).then(function (result) {
         if (result) {
           const token = jwt.sign({ userId: doc._id }, KEY, {
@@ -36,7 +41,15 @@ app
           res.sendStatus(403);
         }
       });
-    } else if (doc) {
+    } else {
+      res.sendStatus(403);
+    }
+  })
+
+  .post("/Signup", async (req, res) => {
+    const { email, password } = req.body;
+    const doc = await User.findOne({ email });
+    if (doc) {
       res.sendStatus(409);
     } else {
       const hash = await bcrypt.hash(password, saltRounds);
@@ -53,16 +66,18 @@ app
       }
     }
   })
+
   .get("/pokemons", async (req, res) => {
-    const { userId } = jwt.verify(req.headers.authorization, KEY);
-    const doc = await User.findById(userId);
+    // const { userId } = jwt.verify(req.headers.authorization, KEY);
+    const doc = await User.findById(req.userId);
     res.send(doc.pokemons);
   })
+
   .post("/pokemons", async (req, res) => {
-    const { userId } = jwt.verify(req.headers.authorization, KEY);
+    // const { userId } = jwt.verify(req.headers.authorization, KEY);
     const pokemons = req.body.pokemons;
     const doc = await User.findByIdAndUpdate(
-      userId,
+      req.userId,
       { pokemons: pokemons },
       { new: true }
     );
