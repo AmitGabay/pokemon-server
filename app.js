@@ -19,8 +19,12 @@ app.use(
 );
 
 app.use((req, _, next) => {
-  const { userId } = jwt.verify(req.headers.authorization, KEY);
-  req.userId = userId;
+  const { authorization } = req.headers;
+
+  if (authorization) {
+    const { userId } = jwt.verify(authorization, KEY);
+    req.userId = userId;
+  }
   next();
 });
 
@@ -68,13 +72,11 @@ app
   })
 
   .get("/pokemons", async (req, res) => {
-    // const { userId } = jwt.verify(req.headers.authorization, KEY);
     const doc = await User.findById(req.userId);
     res.send(doc.pokemons);
   })
 
   .post("/pokemons", async (req, res) => {
-    // const { userId } = jwt.verify(req.headers.authorization, KEY);
     const pokemons = req.body.pokemons;
     const doc = await User.findByIdAndUpdate(
       req.userId,
