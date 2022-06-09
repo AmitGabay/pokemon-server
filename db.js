@@ -7,15 +7,14 @@ const connectionParams = {
   useUnifiedTopology: true,
 };
 
-const connectDB = () => {
-  mongoose
-    .connect(url, connectionParams)
-    .then(() => {
-      console.log("Connected to database ");
-    })
-    .catch((err) => {
-      console.error(`Error connecting to the database. \n${err}`);
-    });
+const connectDB = async () => {
+  try {
+    await mongoose.connect(url, connectionParams);
+
+    console.log("Connected to database ");
+  } catch (err) {
+    console.error(`Error connecting to the database. \n${err}`);
+  }
 };
 
 export default connectDB;
